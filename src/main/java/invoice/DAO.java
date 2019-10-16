@@ -78,59 +78,79 @@ public class DAO {
 	 * @throws java.lang.Exception si la transaction a échoué
 	 */
 	public void createInvoice(CustomerEntity customer, int[] productIDs, int[] quantities) throws Exception {
-			
-		String sql = "INSERT INTO Invoice(CustomerID) VALUES(?)";
-                
-                String sqlItem = "INSERT INTO Item(InvoiceID, ProductID, Quantity, Cost) VALUES(?,?,?,?)";
-                
-                String sqlPrix = "SELECT Price FROM Product WHERE ID=?";
-                float prixResult = 0.0f ;;
-                                
-		try (	Connection myConnection = myDataSource.getConnection();
-			PreparedStatement statement = myConnection.prepareStatement(sql,Statement.RETURN_GENERATED_KEYS);
-                        PreparedStatement statementPrix = myConnection.prepareStatement(sqlPrix);
-                        PreparedStatement statementItem = myConnection.prepareStatement(sqlItem)){
-			
-			myConnection.setAutoCommit(false); // On démarre une transaction
-			try {
-                                //invoice
-				statement.setInt(1,customer.getCustomerId());
-                                
-				int numberUpdated = statement.executeUpdate();
-                                int cleInvoice = statement.getGeneratedKeys().getInt(1);
-                                if(numberUpdated != 1)
-                                    throw new IllegalArgumentException("Pb Invoice");
-                                
-                                
-                                
-				// item
-                                for (int i=0;i<=productIDs.length;i++) {
-                                    //prix
-                                    statementPrix.setFloat(1,productIDs[i]);
-                                    try (ResultSet resultSet = statementPrix.executeQuery()) {
-                                            if (resultSet.next()) {
-                                                    prixResult = resultSet.getFloat("Price");
-                                            }
+
+            String sql = "INSERT INTO Invoice(CustomerID) VALUES(?)";
+
+            String sqlItem = "INSERT INTO Item(InvoiceID, Item, ProductID, Quantity, Cost) VALUES(?,?,?,?,?)";
+
+            String sqlPrix = "SELECT Price FROM Product WHERE ID=?";
+            
+            String sqlTotal = "UPDATE Invoice SET Total = Total + ? WHERE ID= ?";
+            
+            float prixResult = 0.0f ;;
+
+            try (	Connection myConnection = myDataSource.getConnection();
+                PreparedStatement statement = myConnection.prepareStatement(sql,Statement.RETURN_GENERATED_KEYS);
+                PreparedStatement statementPrix = myConnection.prepareStatement(sqlPrix);
+                PreparedStatement statementTotal = myConnection.prepareStatement(sqlTotal);
+                PreparedStatement statementItem = myConnection.prepareStatement(sqlItem)){
+
+                myConnection.setAutoCommit(false); // On démarre une transaction
+                try {
+                        //invoice
+                        statement.setInt(1,customer.getCustomerId());
+
+                        int numberUpdated = statement.executeUpdate();
+                        
+                        if(numberUpdated != 1)
+                            throw new IllegalArgumentException("Pb Invoice");
+
+                        // Recupère la clé de Invoice
+                        ResultSet clefs = statement.getGeneratedKeys(); 
+                        clefs.next();;
+                        int cleInvoice = clefs.getInt(1);
+                        
+
+
+                        // item
+                        for (int i=0;i<productIDs.length;i++) {
+                            //prix
+                            statementPrix.setFloat(1,productIDs[i]);
+                            try (ResultSet resultSet = statementPrix.executeQuery()) {
+                                    if (resultSet.next()) {
+                                            prixResult = resultSet.getFloat("Price");
                                     }
-                                    
-                                    statementItem.clearParameters();
-                                    statementItem.setInt( 1, cleInvoice);
-                                    statementItem.setInt(2, productIDs[i]);
-                                    statementItem.setInt(3, quantities[i]);
-                                    statementItem.setFloat(4, prixResult);
-                                    numberUpdated = statementItem.executeUpdate();
-                                    
-                                }   
-				// Tout s'est bien passé, on peut valider la transaction
-				myConnection.commit();
-			} catch (Exception ex) {
-				myConnection.rollback(); // On annule la transaction
-				throw ex;       
-			} finally {
-				 // On revient au mode de fonctionnement sans transaction
-				myConnection.setAutoCommit(true);				
-			}
-		}
+                            }
+
+                            statementItem.clearParameters();
+                            statementItem.setInt(1, cleInvoice);
+                            statementItem.setInt(2, i);
+                            statementItem.setInt(3, productIDs[i]);
+                            statementItem.setInt(4, quantities[i]);
+                            statementItem.setFloat(5, prixResult*quantities[i]);
+                            
+                            numberUpdated = statementItem.executeUpdate();
+                            if(numberUpdated != 1)
+                                throw new IllegalArgumentException("Pb Item num "+i);
+                            //si aucun pb : maj du total
+                            statementTotal.setFloat(1,prixResult);
+                            statementTotal.setInt(2,cleInvoice);
+                            
+                            numberUpdated = statementTotal.executeUpdate();
+                            if(numberUpdated != 1)
+                                throw new IllegalArgumentException("Pb MAJ Total num "+i);
+
+                        }   
+                        // Tout s'est bien passé, on peut valider la transaction
+                        myConnection.commit();
+                } catch (Exception ex) {
+                        myConnection.rollback(); // On annule la transaction
+                        throw ex;       
+                } finally {
+                         // On revient au mode de fonctionnement sans transaction
+                        myConnection.setAutoCommit(true);				
+                }
+            }
 	}
 
 	/**

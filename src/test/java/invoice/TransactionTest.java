@@ -95,8 +95,6 @@ public class TransactionTest {
 	}
 	
         
-        @Test
-         
 	
 	public static DataSource getDataSource() throws SQLException {
 		org.hsqldb.jdbc.JDBCDataSource ds = new org.hsqldb.jdbc.JDBCDataSource();
