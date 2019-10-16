@@ -127,7 +127,7 @@ public class DAO {
                             statementItem.setInt(2, i);
                             statementItem.setInt(3, productIDs[i]);
                             statementItem.setInt(4, quantities[i]);
-                            statementItem.setFloat(5, prixResult*quantities[i]);
+                            statementItem.setFloat(5, prixResult);
                             
                             numberUpdated = statementItem.executeUpdate();
                             if(numberUpdated != 1)

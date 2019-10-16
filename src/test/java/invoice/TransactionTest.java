@@ -93,6 +93,8 @@ public class TransactionTest {
 
 		assertEquals(before + 2f * 10f, after, 0.001f);		
 	}
+        
+        //impossible de créer des items avec des id lignes inconnues
 	
         
 	
