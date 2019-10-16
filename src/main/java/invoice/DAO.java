@@ -92,7 +92,7 @@ public class DAO {
             try (	Connection myConnection = myDataSource.getConnection();
                 PreparedStatement statement = myConnection.prepareStatement(sql,Statement.RETURN_GENERATED_KEYS);
                 PreparedStatement statementPrix = myConnection.prepareStatement(sqlPrix);
-                PreparedStatement statementTotal = myConnection.prepareStatement(sqlTotal);
+                //PreparedStatement statementTotal = myConnection.prepareStatement(sqlTotal);
                 PreparedStatement statementItem = myConnection.prepareStatement(sqlItem)){
 
                 myConnection.setAutoCommit(false); // On démarre une transaction
@@ -133,12 +133,12 @@ public class DAO {
                             if(numberUpdated != 1)
                                 throw new IllegalArgumentException("Pb Item num "+i);
                             //si aucun pb : maj du total
-                            statementTotal.setFloat(1,prixResult);
-                            statementTotal.setInt(2,cleInvoice);
+                            //statementTotal.setFloat(1,prixResult);
+                            //statementTotal.setInt(2,cleInvoice);
                             
-                            numberUpdated = statementTotal.executeUpdate();
-                            if(numberUpdated != 1)
-                                throw new IllegalArgumentException("Pb MAJ Total num "+i);
+                            //numberUpdated = statementTotal.executeUpdate();
+                            //if(numberUpdated != 1)
+                                //throw new IllegalArgumentException("Pb MAJ Total num "+i);
 
                         }   
                         // Tout s'est bien passé, on peut valider la transaction
